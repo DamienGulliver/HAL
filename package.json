@@ -1,0 +1,18 @@
+{
+  "name": "realtime",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "realtime.js",
+  "scripts": {
+    "start": "node realtime.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "OpenAI Realtime API implementation",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ws": "^8.18.0"
+  }
+}
