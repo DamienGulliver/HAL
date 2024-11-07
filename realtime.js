@@ -1,123 +1,186 @@
 import WebSocket from "ws";
 import 'dotenv/config';
 import Speaker from 'speaker';
+import recorder from 'node-record-lpcm16';
 
-// Initialize speaker with correct PCM format for OpenAI's audio
-const speaker = new Speaker({
-    channels: 1,          // Mono audio
-    bitDepth: 16,         // 16-bit audio
-    sampleRate: 24000,    // OpenAI's sample rate
-    signed: true,         // Signed PCM
-    endianness: 'LE'     // Little-endian (important for correct playback)
-});
+// Track states
+let isRecording = false;
+let isSpeakerPlaying = false;
+let recording = null;
+let speaker = null;
 
+function createSpeaker() {
+  speaker = new Speaker({
+    channels: 1,
+    bitDepth: 16,
+    sampleRate: 24000,
+    signed: true,
+    endianness: 'LE'
+  });
+
+  speaker.on('open', () => {
+    console.log('Speaker opened');
+    isSpeakerPlaying = true;
+  });
+
+  speaker.on('close', () => {
+    console.log('Speaker closed');
+    isSpeakerPlaying = false;
+    speaker = null;
+    startListening();
+  });
+
+  speaker.on('error', (err) => {
+    console.error('Speaker error:', err);
+    isSpeakerPlaying = false;
+    speaker = null;
+  });
+
+  return speaker;
+}
+
+// Function to convert raw PCM buffer to base64
+function rawToBase64(buffer) {
+  return buffer.toString('base64');
+}
+
+function startListening() {
+  if (isRecording || isSpeakerPlaying) {
+    return;
+  }
+  
+  console.log("\nListening... (Start speaking)");
+  isRecording = true;
+  
+  recording = recorder.record({
+    sampleRate: 24000,
+    channels: 1,
+    audioType: 'raw',
+    endian: 'LE',
+    bitwidth: 16
+  });
+
+  recording.stream().on('data', chunk => {
+    if (!isRecording) return;
+    
+    const base64AudioData = rawToBase64(chunk);
+    ws.send(JSON.stringify({
+      type: 'input_audio_buffer.append',
+      audio: base64AudioData
+    }));
+  });
+}
+
+function stopRecording() {
+  if (recording) {
+    recording.stop();
+    isRecording = false;
+  }
+}
+
+// Initialize WebSocket connection
 const url = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01";
 const ws = new WebSocket(url, {
-    headers: {
-        "Authorization": "Bearer " + process.env.OPENAI_API_KEY,
-        "OpenAI-Beta": "realtime=v1",
-    },
+  headers: {
+    "Authorization": "Bearer " + process.env.OPENAI_API_KEY,
+    "OpenAI-Beta": "realtime=v1",
+  },
 });
 
-// Track if we're currently playing audio
-let isPlaying = false;
-let totalBytesReceived = 0;
-
-ws.on("open", function open() {
-    console.log("Connected to server.");
-    
-    const event = {
-        type: 'conversation.item.create',
-        item: {
-            type: 'message',
-            role: 'user',
-            content: [
-                {
-                    type: 'input_text',
-                    text: 'Hello!'
-                }
-            ]
-        }
-    };
-    
-    ws.send(JSON.stringify(event));
-    ws.send(JSON.stringify({type: 'response.create'}));
-});
-
-ws.on("message", function incoming(message) {
-    const data = JSON.parse(message.toString());
-    
-    switch (data.type) {
-        case 'response.audio.delta':
-            if (!isPlaying) {
-                isPlaying = true;
-                console.log('Started receiving audio data...');
-            }
-            
-            // Convert base64 to binary buffer
-            const audioChunk = Buffer.from(data.delta, 'base64');
-            totalBytesReceived += audioChunk.length;
-            
-            console.log(`Received audio chunk: ${audioChunk.length} bytes (Total: ${totalBytesReceived} bytes)`);
-            
-            try {
-                // Write the audio chunk directly to the speaker
-                speaker.write(audioChunk);
-            } catch (err) {
-                console.error('Error writing to speaker:', err);
-            }
-            break;
-            
-        case 'response.audio_transcript.delta':
-            process.stdout.write(data.delta);
-            break;
-            
-        case 'response.audio.done':
-            console.log('\nFinished receiving audio data');
-            console.log(`Total audio data received: ${totalBytesReceived} bytes`);
-            
-            // Add a small delay before ending to ensure all audio is played
-            setTimeout(() => {
-                speaker.end();
-                isPlaying = false;
-                totalBytesReceived = 0;
-            }, 500);
-            break;
-            
-        case 'response.audio_transcript.done':
-            console.log('\nFull transcript:', data.transcript);
-            break;
+ws.on("open", async function open() {
+  console.log("Connected to server.");
+  
+  // Configure session with Server VAD
+  ws.send(JSON.stringify({
+    type: 'session.update',
+    session: {
+      modalities: ["text", "audio"],
+      input_audio_format: "pcm16",
+      output_audio_format: "pcm16",
+      turn_detection: {
+        type: "server_vad",
+        threshold: 0.5,
+        prefix_padding_ms: 300,
+        silence_duration_ms: 500
+      }
     }
+  }));
+});
+
+ws.on("message", async function incoming(message) {
+  const data = JSON.parse(message.toString());
+  
+  switch (data.type) {
+    case 'session.created':
+    case 'session.updated':
+      startListening();
+      break;
+      
+    case 'input_audio_buffer.speech_started':
+      console.log("Voice detected...");
+      break;
+      
+    case 'input_audio_buffer.speech_stopped':
+      console.log("Silence detected, processing...");
+      stopRecording();
+      break;
+      
+    case 'response.audio.delta':
+      if (!speaker) {
+        speaker = createSpeaker();
+      }
+      const audioChunk = Buffer.from(data.delta, 'base64');
+      try {
+        speaker.write(audioChunk);
+      } catch (err) {
+        console.error('Error writing to speaker:', err);
+      }
+      break;
+      
+    case 'response.audio_transcript.delta':
+      process.stdout.write(data.delta);
+      break;
+      
+    case 'response.audio.done':
+      console.log('\nResponse audio complete');
+      if (speaker) {
+        // Give a small delay before ending the speaker to ensure all audio is played
+        setTimeout(() => {
+          speaker.end();
+        }, 500);
+      }
+      break;
+      
+    case 'response.audio_transcript.done':
+      console.log('\nFull transcript:', data.transcript);
+      break;
+      
+    case 'error':
+      console.error('Server error:', data.error);
+      break;
+  }
 });
 
 // Error handling
-speaker.on('error', (err) => {
-    console.error('Speaker error:', err);
-});
-
-speaker.on('open', () => {
-    console.log('Speaker opened and ready');
-});
-
 ws.on("error", function error(err) {
-    console.error("WebSocket error:", err);
-    if (speaker) {
-        speaker.end();
-    }
+  console.error("WebSocket error:", err);
+  stopRecording();
 });
 
 ws.on("close", function close() {
-    console.log("Disconnected from server");
-    if (speaker) {
-        speaker.end();
-    }
+  console.log("Disconnected from server");
+  stopRecording();
+  if (speaker) {
+    speaker.end();
+  }
 });
 
 // Handle process termination
 process.on('SIGINT', () => {
-    if (speaker) {
-        speaker.end();
-    }
-    ws.close();
-    process.exit();
+  stopRecording();
+  if (speaker) {
+    speaker.end();
+  }
+  ws.close();
+  process.exit();
 });
