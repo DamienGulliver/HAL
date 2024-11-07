@@ -3,54 +3,15 @@ import 'dotenv/config';
 import Speaker from 'speaker';
 import recorder from 'node-record-lpcm16';
 
-// Track states
-let isRecording = false;
-let isSpeakerPlaying = false;
 let recording = null;
 let speaker = null;
-
-function createSpeaker() {
-  speaker = new Speaker({
-    channels: 1,
-    bitDepth: 16,
-    sampleRate: 24000,
-    signed: true,
-    endianness: 'LE'
-  });
-
-  speaker.on('open', () => {
-    console.log('Speaker opened');
-    isSpeakerPlaying = true;
-  });
-
-  speaker.on('close', () => {
-    console.log('Speaker closed');
-    isSpeakerPlaying = false;
-    speaker = null;
-    startListening();
-  });
-
-  speaker.on('error', (err) => {
-    console.error('Speaker error:', err);
-    isSpeakerPlaying = false;
-    speaker = null;
-  });
-
-  return speaker;
-}
-
-// Function to convert raw PCM buffer to base64
-function rawToBase64(buffer) {
-  return buffer.toString('base64');
-}
+let isWaitingForPlayback = false;
+let audioQueue = [];
 
 function startListening() {
-  if (isRecording || isSpeakerPlaying) {
-    return;
-  }
+  if (isWaitingForPlayback) return;
   
   console.log("\nListening... (Start speaking)");
-  isRecording = true;
   
   recording = recorder.record({
     sampleRate: 24000,
@@ -61,9 +22,9 @@ function startListening() {
   });
 
   recording.stream().on('data', chunk => {
-    if (!isRecording) return;
+    if (isWaitingForPlayback) return;
     
-    const base64AudioData = rawToBase64(chunk);
+    const base64AudioData = chunk.toString('base64');
     ws.send(JSON.stringify({
       type: 'input_audio_buffer.append',
       audio: base64AudioData
@@ -71,14 +32,13 @@ function startListening() {
   });
 }
 
-function stopRecording() {
+function stopListening() {
   if (recording) {
     recording.stop();
-    isRecording = false;
+    recording = null;
   }
 }
 
-// Initialize WebSocket connection
 const url = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01";
 const ws = new WebSocket(url, {
   headers: {
@@ -87,10 +47,9 @@ const ws = new WebSocket(url, {
   },
 });
 
-ws.on("open", async function open() {
+ws.on("open", function open() {
   console.log("Connected to server.");
   
-  // Configure session with Server VAD
   ws.send(JSON.stringify({
     type: 'session.update',
     session: {
@@ -107,7 +66,7 @@ ws.on("open", async function open() {
   }));
 });
 
-ws.on("message", async function incoming(message) {
+ws.on("message", function incoming(message) {
   const data = JSON.parse(message.toString());
   
   switch (data.type) {
@@ -117,23 +76,46 @@ ws.on("message", async function incoming(message) {
       break;
       
     case 'input_audio_buffer.speech_started':
-      console.log("Voice detected...");
+      if (!isWaitingForPlayback) {
+        console.log("Voice detected...");
+      }
       break;
       
     case 'input_audio_buffer.speech_stopped':
-      console.log("Silence detected, processing...");
-      stopRecording();
+      if (!isWaitingForPlayback) {
+        console.log("Silence detected, processing...");
+        stopListening();
+      }
       break;
       
     case 'response.audio.delta':
       if (!speaker) {
-        speaker = createSpeaker();
+        isWaitingForPlayback = true;
+        stopListening();
+        speaker = new Speaker({
+          channels: 1,
+          bitDepth: 16,
+          sampleRate: 24000,
+          signed: true,
+          endianness: 'LE'
+        });
       }
+      
       const audioChunk = Buffer.from(data.delta, 'base64');
-      try {
-        speaker.write(audioChunk);
-      } catch (err) {
-        console.error('Error writing to speaker:', err);
+      audioQueue.push(audioChunk);
+      
+      if (audioQueue.length === 1) {
+        function playNextChunk() {
+          if (audioQueue.length > 0 && speaker) {
+            const chunk = audioQueue[0];
+            speaker.write(chunk);
+            audioQueue.shift();
+            if (audioQueue.length > 0) {
+              setTimeout(playNextChunk, 10);
+            }
+          }
+        }
+        playNextChunk();
       }
       break;
       
@@ -144,40 +126,38 @@ ws.on("message", async function incoming(message) {
     case 'response.audio.done':
       console.log('\nResponse audio complete');
       if (speaker) {
-        // Give a small delay before ending the speaker to ensure all audio is played
         setTimeout(() => {
           speaker.end();
-        }, 500);
+          // Wait for a significant delay before starting to listen again
+          setTimeout(() => {
+            speaker = null;
+            isWaitingForPlayback = false;
+            audioQueue = [];
+            // Additional delay before starting to listen
+            setTimeout(startListening, 5000);
+          }, 2000);
+        }, 1000);
       }
       break;
       
     case 'response.audio_transcript.done':
       console.log('\nFull transcript:', data.transcript);
       break;
-      
-    case 'error':
-      console.error('Server error:', data.error);
-      break;
   }
 });
 
-// Error handling
 ws.on("error", function error(err) {
   console.error("WebSocket error:", err);
-  stopRecording();
+  stopListening();
 });
 
 ws.on("close", function close() {
   console.log("Disconnected from server");
-  stopRecording();
-  if (speaker) {
-    speaker.end();
-  }
+  stopListening();
 });
 
-// Handle process termination
 process.on('SIGINT', () => {
-  stopRecording();
+  stopListening();
   if (speaker) {
     speaker.end();
   }
