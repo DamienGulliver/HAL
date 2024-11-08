@@ -12,12 +12,9 @@
   "license": "ISC",
   "description": "OpenAI Realtime API implementation",
   "dependencies": {
-    "audio-decode": "^2.2.2",
     "dotenv": "^16.4.5",
-    "node-microphone": "^0.1.6",
     "node-record-lpcm16": "^1.0.1",
     "speaker": "^0.5.5",
-    "web-audio-api": "^0.2.2",
     "ws": "^8.18.0"
   }
 }
