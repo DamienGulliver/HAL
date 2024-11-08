@@ -12,31 +12,28 @@ if (!process.env.OPENAI_API_KEY) {
     process.exit(1);
 }
 
-// Initialize speaker with correct PCM format
-const speaker = new Speaker({
-    channels: 1,
-    bitDepth: 16,
-    sampleRate: 24000, // OpenAI's output sample rate
-    signed: true
-});
-
-// Buffer to accumulate audio chunks
+let currentSpeaker = null;
 let audioBuffer = Buffer.alloc(0);
-
 let isRecording = false;
 let recordingStream = null;
 let sessionConfigured = false;
 
-// Create WebSocket connection
-const ws = new WebSocket("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01", {
-    headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "OpenAI-Beta": "realtime=v1",
-    }
-});
+function createNewSpeaker() {
+    return new Speaker({
+        channels: 1,
+        bitDepth: 16,
+        sampleRate: 24000,
+        signed: true
+    });
+}
 
 function playAudio(base64Audio) {
     try {
+        // Create new speaker if we don't have one
+        if (!currentSpeaker) {
+            currentSpeaker = createNewSpeaker();
+        }
+        
         // Convert base64 to buffer
         const chunk = Buffer.from(base64Audio, 'base64');
         
@@ -44,9 +41,23 @@ function playAudio(base64Audio) {
         audioBuffer = Buffer.concat([audioBuffer, chunk]);
         
         // Play through speaker
-        speaker.write(chunk);
+        currentSpeaker.write(chunk);
     } catch (error) {
         console.error('Error playing audio:', error);
+    }
+}
+
+function cleanupAudio() {
+    try {
+        if (currentSpeaker) {
+            // End the current speaker stream
+            currentSpeaker.end();
+            currentSpeaker = null;
+        }
+        // Reset the audio buffer
+        audioBuffer = Buffer.alloc(0);
+    } catch (error) {
+        console.error('Error cleaning up audio:', error);
     }
 }
 
@@ -116,6 +127,14 @@ function stopRecording() {
     }
 }
 
+// Create WebSocket connection
+const ws = new WebSocket("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01", {
+    headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "OpenAI-Beta": "realtime=v1",
+    }
+});
+
 // Initialize session on connection
 ws.on('open', function() {
     console.log('Connected to OpenAI');
@@ -174,15 +193,24 @@ ws.on('message', function(data) {
                 }, 1000);
                 break;
 
+            case 'response.created':
+                // Clean up any previous audio when starting a new response
+                cleanupAudio();
+                break;
+
             case 'response.audio.delta':
-                // Play the audio chunk
                 if (event.delta) {
                     playAudio(event.delta);
                 }
                 break;
 
+            case 'response.audio.done':
+                // Handle end of audio stream
+                console.log('Audio response complete');
+                setTimeout(() => cleanupAudio(), 500); // Give a small delay to finish playing
+                break;
+
             case 'response.audio_transcript.delta':
-                // Print the transcript as it comes in
                 if (event.delta) {
                     process.stdout.write(event.delta);
                 }
@@ -197,6 +225,15 @@ ws.on('message', function(data) {
             case 'input_audio_buffer.committed':
                 console.log('Audio committed to conversation');
                 break;
+
+            case 'error':
+                if (event.error.message.includes('buffer too small')) {
+                    // Ignore the "buffer too small" error as it's not critical
+                    console.log('Ignoring buffer size warning - continuing to record...');
+                } else {
+                    console.error('Error event:', event.error);
+                }
+                break;
         }
     } catch (error) {
         console.error('Error parsing message:', error);
@@ -207,18 +244,21 @@ ws.on('message', function(data) {
 ws.on('error', function(error) {
     console.error('WebSocket error:', error);
     stopRecording();
+    cleanupAudio();
 });
 
 // Handle WebSocket close
 ws.on('close', function() {
     console.log('Connection closed');
     stopRecording();
+    cleanupAudio();
 });
 
 // Handle process termination
 process.on('SIGINT', () => {
     console.log('Shutting down...');
     stopRecording();
+    cleanupAudio();
     ws.close();
     process.exit(0);
 });
