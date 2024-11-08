@@ -51,7 +51,14 @@ function playCompleteResponse() {
         });
 
         currentSpeaker.write(responseBuffer);
-        currentSpeaker.end();
+        
+        // Add delay before ending the stream to prevent audio clipping
+        setTimeout(() => {
+            if (currentSpeaker) {
+                currentSpeaker.end();
+            }
+        }, 500);  // 500ms delay should be enough to prevent clipping
+        
     } catch (error) {
         console.error('Error playing audio:', error);
         isCurrentlyPlaying = false;
@@ -220,7 +227,7 @@ ws.on('message', function(data) {
                 if (event.error.message.includes('buffer too small')) {
                     console.log('Ignoring buffer size warning - continuing to record...');
                 } else {
-                    console.error('Error event:', event.error);
+                    console.error('Error event:', error.error);
                 }
                 break;
         }
