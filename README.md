@@ -1,8 +1,8 @@
 # HAL: Multimodal Voice Assistant
 
-An AI-powered voice assistant inspired by HAL-9000 (2001, A Space Odyssey). The system runs on both personal computers (Mac/Windows/Linux) and edge devices (Jetson Nano). The OpenAI Realtime API is used to allow low-latency voice conversations with GPT-4o. When run on a Jetson Nano connected with a USB camera and microphone, the system combines real-time conversational abilities with face detection and audio processing. 
+An AI-powered voice assistant inspired by HAL-9000 (2001, A Space Odyssey). The system runs on both personal computers (Mac/Windows/Linux) and edge devices (Jetson Nano, in development). The OpenAI Realtime API is used to allow low-latency voice conversations with GPT-4o. When run on a Jetson Nano connected with a USB camera and microphone, the system combines real-time conversational abilities with face detection and audio processing. 
 
-The eventual aim is to build a home assistant module (that looks and sounds like HAL-9000) with real-time conversational abilities, facial detection/recognition, audio and scent detection. This project is at a very early stage, under active development and may (will) break often.
+The eventual aim is to build a home assistant module (that looks and sounds like HAL-9000) with real-time conversational abilities, facial detection & recognition, audio and scent detection. This project is at a very early stage, under active development and may (will) break often.
 
 If you would like to build a replica of the HAL-9000 interface, 3D printed components can be found here:
  - https://www.thingiverse.com/thing:1805762
@@ -18,11 +18,30 @@ This project provides two implementations:
 
 ### Features
 - 🎤 Real-time voice interaction
-- 👤 Face detection and tracking (Jetson Nano only)
+- 👤 Face detection and tracking (only on Jetson Nano currently)
 - 🔄 Bi-directional audio streaming
 - 🎯 Low-latency responses
 - 🖥️ Cross-platform support (Mac, Windows, Linux)
 - 🤖 Edge device support (Jetson Nano)
+
+## Quickstart (Mac OS only for now)
+```bash
+# clone this repo
+git clone https://github.com/DamienGulliver/HAL.git
+
+# Change directory
+cd HAL
+
+# Make setup script executable
+chmod +x scripts/setup_mac.sh
+
+# Run setup (and read the instructions printed to the terminal)
+./scripts/setup_mac.sh
+
+# Start the assistant
+cd pc/src/
+node index.js
+```
 
 ## Installation
 

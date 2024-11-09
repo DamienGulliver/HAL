@@ -3,8 +3,14 @@ import dotenv from 'dotenv';
 import recorder from 'node-record-lpcm16';
 import Speaker from 'speaker';
 import os from 'os';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// Get the directory name of the current module
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Configure dotenv to look in the same directory as this script
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 if (!process.env.OPENAI_API_KEY) {
     console.error('OPENAI_API_KEY is missing from .env file');
