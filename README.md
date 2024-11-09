@@ -11,7 +11,7 @@ If you are interested in developing scent detection capability, the Bosch BME688
  - https://www.sparkfun.com/products/19630
 
 <div align="center">
-  <img src="assets/hal9000.jpg" width="800" height="600" alt="HAL 9000">
+  <img src="assets/hal9000.jpg" width="600" height="400" alt="HAL 9000">
 </div>
 
 ## Overview
