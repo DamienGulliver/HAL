@@ -188,7 +188,7 @@ pc/
 ```
 
 ## Contributing
-Please read [CONTRIBUTING.md](../docs/CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+Contributions are welcome! Please read the [Contributing Guidelines](..docs/CONTRIBUTING.md) and [Code of Conduct](..docs/CODE_OF_CONDUCT.md) before submitting pull requests.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
