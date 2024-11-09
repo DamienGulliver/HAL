@@ -113,7 +113,7 @@ aplay test.wav
 
 ## Configuration
 
-The setup scripts will create a .env file in the pc directory. If you need to configure it manually:
+The setup scripts will create a .env file in the src directory. If you need to configure it manually:
 
 1. Create a .env file in the src directory:
 ```bash
@@ -130,7 +130,7 @@ OPENAI_API_KEY=your_api_key_here
 
 From the project root directory:
 ```bash
-cd pc && node src/index.js
+cd pc/src && node index.js
 ```
 
 ## Troubleshooting

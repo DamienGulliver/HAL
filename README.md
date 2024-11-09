@@ -30,7 +30,7 @@ This project provides two implementations:
 - 🖥️ Cross-platform support (Mac, Windows, Linux)
 - 🤖 Edge device support (Jetson Nano)
 
-## Quickstart (Mac OS only for now)
+## Quickstart (MacOS only for now)
 ```bash
 # clone this repo
 git clone https://github.com/DamienGulliver/HAL.git
