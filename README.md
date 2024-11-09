@@ -1,6 +1,8 @@
 # HAL: Multimodal Voice Assistant
 
-![HAL 9000](assets/hal9000.jpg)
+<div align="center">
+  <img src="assets/hal9000.png" width="100" height="100" alt="HAL 9000">
+</div>
 
 An AI-powered voice assistant inspired by HAL-9000 (2001, A Space Odyssey). The system runs on both personal computers (Mac/Windows/Linux) and edge devices (Jetson Nano, in development). The OpenAI Realtime API (currently in preview) is used to allow low-latency voice conversations with GPT-4o. When run on a Jetson Nano connected with a USB camera and microphone, the system combines real-time conversational abilities with face detection and audio processing. 
 
