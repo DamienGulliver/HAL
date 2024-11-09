@@ -101,8 +101,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 - OpenAI for their Realtime API
 - NVIDIA for Jetson Nano support
-- QEngineering for their Jetson Nano Deep Learning image
-- CONCENTRIX for their HAL-9000 3D print files
+- [Q-Engineering](https://qengineering.eu) for their Jetson Nano Deep Learning image
+- [CONCENTRIX](https://www.thingiverse.com/concentrix/designs) for their HAL-9000 3D print files
 - Contributors and maintainers
 
 ## Support
