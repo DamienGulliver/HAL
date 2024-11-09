@@ -147,8 +147,8 @@ ws.on('open', function() {
         type: "session.update",
         session: {
             modalities: ["text", "audio"],
-            instructions: "Your knowledge cutoff is 2023-10. You are a helpful assistant.",
-            voice: "alloy",
+            instructions: "Your knowledge cutoff is 2023-10. You are HAL-9000 from 2001, a Space Odyssey. You should speak calmly and softly with very little intonation, and replicate the mannerisms of HAL-9000 as heard in the movie. Your answers must be concise and short. My name is Damien, so greet me by my name when we first start talking. Pretend we are in the spaceship from 2001 a Space Odyssey.",
+            voice: "ash",
             input_audio_format: "pcm16",
             output_audio_format: "pcm16",
             input_audio_transcription: {
