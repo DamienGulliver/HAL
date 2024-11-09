@@ -1,9 +1,5 @@
 # HAL: Multimodal Voice Assistant
 
-<div align="center">
-  <img src="assets/hal9000.png" width="100" height="100" alt="HAL 9000">
-</div>
-
 An AI-powered voice assistant inspired by HAL-9000 (2001, A Space Odyssey). The system runs on both personal computers (Mac/Windows/Linux) and edge devices (Jetson Nano, in development). The OpenAI Realtime API (currently in preview) is used to allow low-latency voice conversations with GPT-4o. When run on a Jetson Nano connected with a USB camera and microphone, the system combines real-time conversational abilities with face detection and audio processing. 
 
 The eventual aim is to build a home assistant module (that looks and sounds like HAL-9000) with real-time conversational abilities, facial detection & recognition, audio and scent detection. This project is at a very early stage, under active development and may (will) break often.
@@ -13,6 +9,10 @@ If you would like to build a replica of the HAL-9000 interface, 3D printed compo
 
 If you are interested in developing scent detection capability, the Bosch BME688 development kit could be a good starting point:
  - https://www.sparkfun.com/products/19630
+
+<div align="center">
+  <img src="assets/hal9000.jpg" width="200" height="200" alt="HAL 9000">
+</div>
 
 ## Overview
 
