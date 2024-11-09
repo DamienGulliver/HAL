@@ -1,6 +1,14 @@
 # HAL: Multimodal Voice Assistant
 
-An AI-powered voice assistant inspired by HAL-9000 (2001, A Space Odyssey). The system runs on both personal computers (Mac/Windows/Linux) and edge devices (Jetson Nano). The OpenAI Realtime API is used to allow low-latency voice conversations with GPT-4o. When run on a Jetson Nano connected with a USB camera and microphone, the system combines real-time conversational abilities with face detection and audio processing. This project is at an early stage, under active development and may (will) break often.
+An AI-powered voice assistant inspired by HAL-9000 (2001, A Space Odyssey). The system runs on both personal computers (Mac/Windows/Linux) and edge devices (Jetson Nano). The OpenAI Realtime API is used to allow low-latency voice conversations with GPT-4o. When run on a Jetson Nano connected with a USB camera and microphone, the system combines real-time conversational abilities with face detection and audio processing. 
+
+The eventual aim is to build a home assistant module (that looks and sounds like HAL-9000) with real-time conversational abilities, facial detection/recognition, audio and scent detection. This project is at a very early stage, under active development and may (will) break often.
+
+If you would like to build a replica of the HAL-9000 interface, 3D printed components can be found here:
+ - https://www.thingiverse.com/thing:1805762
+
+If you are interested in developing scent detection capability, the Bosch BME688 development kit could be a good starting point:
+ - https://www.sparkfun.com/products/19630
 
 ## Overview
 
@@ -39,10 +47,11 @@ For detailed setup instructions, please refer to:
 - Microphone and speakers
 
 ## Detailed Documentation
-- [PC Setup Guide](docs/PC_SETUP.md)
-- [Jetson Nano Setup Guide](docs/NANO_SETUP.md)
+- [PC Setup Guide](pc/README.md)
+- [Jetson Nano Setup Guide](nano/README.md)
 - [Contributing Guidelines](docs/CONTRIBUTING.md)
-- [API Documentation](https://platform.openai.com/docs/guides/realtime)
+- [OpenAI Realtime API Documentation](https://platform.openai.com/docs/guides/realtime)
+- [Setting up Jetson Nano SD Card](https://github.com/Qengineering/Jetson-Nano-image)
 
 ## Project Structure
 ```
@@ -70,6 +79,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - OpenAI for their Realtime API
 - NVIDIA for Jetson Nano support
 - QEngineering for their Jetson Nano Deep Learning image
+- CONCENTRIX for their HAL-9000 3D print files
 - Contributors and maintainers
 
 ## Support
