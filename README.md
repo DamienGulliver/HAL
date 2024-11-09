@@ -10,6 +10,7 @@ If you would like to build a replica of the HAL-9000 interface, 3D printed compo
 If you are interested in developing scent detection capability, the Bosch BME688 development kit could be a good starting point:
  - https://www.sparkfun.com/products/19630
 
+
 <div align="center">
   <img src="assets/hal9000.jpg" width="600" height="450" alt="HAL 9000">
 </div>
