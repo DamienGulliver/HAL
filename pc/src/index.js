@@ -2,12 +2,29 @@ import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import recorder from 'node-record-lpcm16';
 import Speaker from 'speaker';
+import os from 'os';
 
 dotenv.config();
 
 if (!process.env.OPENAI_API_KEY) {
     console.error('OPENAI_API_KEY is missing from .env file');
     process.exit(1);
+}
+
+// Platform-specific recording settings
+const platform = os.platform();
+const recordingOptions = {
+    sampleRate: 16000,
+    channels: 1,
+    compress: false,
+    threshold: 0.5,
+    recordProgram: platform === 'win32' ? 'sox' : 'rec',
+    silence: '1.0',
+};
+
+// Windows-specific adjustments
+if (platform === 'win32') {
+    recordingOptions.audioType = 'wav';
 }
 
 let currentSpeaker = null;
@@ -19,12 +36,14 @@ let isResponseInProgress = false;
 let isCurrentlyPlaying = false;
 
 function createNewSpeaker() {
-    return new Speaker({
+    const speakerConfig = {
         channels: 1,
         bitDepth: 16,
         sampleRate: 24000,
-        signed: true
-    });
+        signed: true,
+        device: platform === 'linux' ? 'default' : undefined
+    };
+    return new Speaker(speakerConfig);
 }
 
 function playCompleteResponse() {
@@ -52,12 +71,11 @@ function playCompleteResponse() {
 
         currentSpeaker.write(responseBuffer);
         
-        // Add delay before ending the stream to prevent audio clipping
         setTimeout(() => {
             if (currentSpeaker) {
                 currentSpeaker.end();
             }
-        }, 500);  // 500ms delay should be enough to prevent clipping
+        }, 500);
         
     } catch (error) {
         console.error('Error playing audio:', error);
@@ -70,15 +88,6 @@ function startRecording() {
     
     console.log('Starting microphone recording...');
     isRecording = true;
-
-    const recordingOptions = {
-        sampleRate: 16000,
-        channels: 1,
-        compress: false,
-        threshold: 0.5,
-        recordProgram: 'rec',
-        silence: '1.0',
-    };
 
     try {
         recordingStream = recorder.record(recordingOptions);
@@ -227,7 +236,7 @@ ws.on('message', function(data) {
                 if (event.error.message.includes('buffer too small')) {
                     console.log('Ignoring buffer size warning - continuing to record...');
                 } else {
-                    console.error('Error event:', error.error);
+                    console.error('Error event:', event.error);
                 }
                 break;
         }
@@ -261,3 +270,16 @@ process.on('SIGINT', () => {
     ws.close();
     process.exit(0);
 });
+
+// Windows-specific cleanup
+if (platform === 'win32') {
+    process.on('SIGTERM', () => {
+        console.log('Shutting down...');
+        stopRecording();
+        isResponseInProgress = false;
+        isCurrentlyPlaying = false;
+        responseBuffer = Buffer.alloc(0);
+        ws.close();
+        process.exit(0);
+    });
+}
