@@ -93,10 +93,17 @@ arecord -d 5 test.wav
 aplay test.wav
 ```
 
-2. Start the assistant:
+2. Start the face & audio detection script:
 ```bash
-python3 src/face_detection_piped.py
+python3 src/face_detection_with_audio.py
 ```
+
+3. In a separate terminal, start the assistant:
+```bash
+cd src
+node index.js
+```
+*Note: Running the assistant script is currently crashing with memory issues*
 
 ## Performance Optimization
 
@@ -168,11 +175,12 @@ tegrastats
 ```
 nano/
 ├── src/
-│   ├── face_detection.py           # Base face detection with audio
-│   └── face_detection_piped.py     # Face detection with audio sent to a pipe
-├── requirements.txt                # Python dependencies
-├── package.json                    # Node.js dependencies
-└── .env                           # Environment variables
+│   ├── face_detection_with_audio.py            # Base face detection with audio
+│   └── face_detection_with_aduio_piped.py      # Face detection with audio piped for consumption by main app
+│   └── index.js                                # Main application file
+│   └── .env                                    # Environment variables
+├── requirements.txt                            # Python dependencies
+├── package.json                                # Node.js dependencies                       
 ```
 
 ## Contributing

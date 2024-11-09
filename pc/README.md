@@ -24,6 +24,10 @@ chmod +x scripts/setup_mac.sh
 
 # Run setup
 ./scripts/setup_mac.sh
+
+# Start the assistant
+cd pc/src/
+node index.js
 ```
 
 2. Configure permissions:
@@ -111,9 +115,9 @@ aplay test.wav
 
 The setup scripts will create a .env file in the pc directory. If you need to configure it manually:
 
-1. Create a .env file:
+1. Create a .env file in the src directory:
 ```bash
-# From the pc directory
+# From the src directory
 cp .env.example .env
 ```
 
@@ -179,8 +183,8 @@ cd pc && node src/index.js
 pc/
 ├── src/
 │   └── index.js      # Main application file
+│   └── .env          # Environment variables
 ├── package.json      # Node.js dependencies
-└── .env             # Environment variables
 ```
 
 ## Contributing

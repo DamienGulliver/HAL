@@ -1,6 +1,6 @@
 # HAL: Multimodal Voice Assistant
 
-An AI-powered voice assistant inspired by HAL-9000 (2001, A Space Odyssey). The system runs on both personal computers (Mac/Windows/Linux) and edge devices (Jetson Nano, in development). The OpenAI Realtime API is used to allow low-latency voice conversations with GPT-4o. When run on a Jetson Nano connected with a USB camera and microphone, the system combines real-time conversational abilities with face detection and audio processing. 
+An AI-powered voice assistant inspired by HAL-9000 (2001, A Space Odyssey). The system runs on both personal computers (Mac/Windows/Linux) and edge devices (Jetson Nano, in development). The OpenAI Realtime API (currently in preview) is used to allow low-latency voice conversations with GPT-4o. When run on a Jetson Nano connected with a USB camera and microphone, the system combines real-time conversational abilities with face detection and audio processing. 
 
 The eventual aim is to build a home assistant module (that looks and sounds like HAL-9000) with real-time conversational abilities, facial detection & recognition, audio and scent detection. This project is at a very early stage, under active development and may (will) break often.
 
@@ -53,15 +53,14 @@ For detailed setup instructions, please refer to:
 
 ### PC Requirements
 - Node.js 18.0 or higher
-- OpenAI API key
+- OpenAI API key (and credit on your billing account)
 - Microphone and speakers
 - For Windows: Sox audio processor
 - For Linux: ALSA development files
 
 ### Jetson Nano Requirements
-- JetPack 4.6 or higher
-- Python 3.8+
-- OpenAI API key
+- SD card flashed with QEngineering Deep Learning image
+- OpenAI API key (and credit on your billing account)
 - USB camera
 - Microphone and speakers
 
@@ -77,6 +76,7 @@ For detailed setup instructions, please refer to:
 📁 HAL/
 ├── 📁 pc/                  # PC implementation
 ├── 📁 nano/                # Jetson Nano implementation
+└── 📁 scripts/             # Setup scripts for each platform
 └── 📁 docs/                # Documentation
 ```
 See the README files in each directory for platform-specific details.
